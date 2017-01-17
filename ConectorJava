@@ -1,0 +1,283 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package Modelo;
+
+import java.security.MessageDigest;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Iterator;
+import java.util.List;
+
+/**
+ *
+ * @author programadorac
+ */
+public class Conector {
+
+    Connection c1 = null;
+    String comilla = "'";
+    String coma = ",";
+
+    private final String IP = "192.168.1.179";
+    private final String USUARIO = "pygcontabilidad";
+    private final String PASSWORD = "pygcontabilidad456";
+    private final String BASEDATOS = "contabilidad";
+
+    protected Connection conectar() {
+        try {
+            Class.forName("com.mysql.jdbc.Driver").newInstance();
+            c1 = DriverManager.getConnection(
+                    "jdbc:mysql://" + IP + "/" + BASEDATOS, USUARIO, PASSWORD
+            );
+            c1.setAutoCommit(false);
+            System.out.println("Exito");
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | SQLException e) {
+            System.out.println("Fallo la conexion");
+            System.out.println(e.getMessage());
+        }
+        return c1;
+    }
+
+    protected void desconectar() {
+        try {
+            c1.close();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    /**
+     * Ejecuta consultas que no devuelven un conjunto de datos (insert, delete,
+     * update)
+     *
+     * @param SQL cadena de texto que contiene la consulta hacia la base de
+     * datos
+     *
+     */
+    public boolean consulta_vacia(String SQL) {
+        boolean flag = false;
+        this.conectar();
+        try {
+            Statement st = c1.createStatement();
+            flag = st.executeUpdate(SQL) == 1;
+            c1.commit();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        this.desconectar();
+        return flag;
+    }
+    
+    public boolean insertar_transaccion(List<Object> insertar) {
+        boolean flag = false;
+        this.conectar();
+        
+        try {
+            /*Iter para recorrer todas las consultas que estan en la variable List*/    
+            Iterator<Object> iter = insertar.iterator();
+            Statement st;
+            /*Ciclo que se ejecutará hasta que no quede ninguna consulta*/
+            while(iter.hasNext()){
+                String consultaSQL = iter.next().toString();
+                consultaSQL = consultaSQL.replace("[", " ");
+                consultaSQL = consultaSQL.replace("]", " ");
+                st = c1.createStatement();
+                if(st.executeUpdate(consultaSQL) == 1){
+                    flag = true;
+                    System.out.println(consultaSQL);
+                }
+            }
+            c1.commit();
+            
+        } catch (Exception e) {
+            try {
+                c1.rollback();
+                
+                flag = false;
+                System.out.println("ERROR:"+e.getLocalizedMessage());
+            } catch (Exception ex) {
+            }
+            System.out.println(e.getLocalizedMessage());
+        }
+        this.desconectar();
+        return flag;
+    }
+       
+    public boolean insertar_transaccion2(List<Object> insertar) {
+        boolean flag = false;
+        this.conectar();
+        
+        try {
+            /*Iter para recorrer todas las consultas que estan en la variable List*/    
+            Iterator<Object> iter = insertar.iterator();
+            Statement st;
+            CallableStatement callableStatement = null;
+            /*Ciclo que se ejecutará hasta que no quede ninguna consulta*/
+            while(iter.hasNext()){
+                String consultaSQL = iter.next().toString();
+                consultaSQL = consultaSQL.replace("[", "{");
+                consultaSQL = consultaSQL.replace("]", "}");
+//                st = c1.createStatement();
+                callableStatement = c1.prepareCall(consultaSQL);
+                callableStatement.addBatch();
+//                if(callableStatement.execute()){
+//                    flag = true;
+//                    System.out.println(consultaSQL);
+//                }else{
+//                    System.out.println("ERROR");
+//                }
+            }
+            int [] updateCounts =  callableStatement.executeBatch ();
+            int a=0;
+            c1.commit();
+            
+        } catch (Exception e) {
+            try {
+                c1.rollback();
+                flag = false;
+                System.out.println("ERROR:"+e.getLocalizedMessage());
+            } catch (Exception ex) {
+            }
+            System.out.println(e.getLocalizedMessage());
+        }
+        this.desconectar();
+        return flag;
+    }
+
+    /**
+     * Ejecuta consultas que devuelven un conjunto de datos
+     *
+     * @param SQL cadena de texto que contiene la consulta hacia la base de
+     * datos
+     * @return String[][] datos contiene la informacion devuelta por la base de
+     * datos
+     */
+    public String[][] consulta_registros(String SQL) {
+        ResultSet registros = null;
+        String[][] datos = new String[1][1];
+        datos[0][0] = "Sin Resultados";
+
+        int filas = 0;
+        int columnas = 0;
+        ResultSetMetaData metaDatos;
+        this.conectar();
+        /**
+         * Esta parte realiza la conexion y hace la consulta cargando los
+         * datosen la variable registros.
+         */
+        try {
+            Statement st = c1.createStatement();
+            registros = st.executeQuery(SQL); //Ejecuta
+            metaDatos = registros.getMetaData();
+            /**
+             * Datos sobre registros.
+             */
+            columnas = metaDatos.getColumnCount();
+            /**
+             * Cuenta las columnas que tiene la consulta.
+             */
+            registros.last();
+            /**
+             * Con esto nos posicionamos en la ultima fila, ya que no hay metodo
+             * para contarlas como en las columnas "getColumnCount".
+             */
+
+            filas = registros.getRow();
+            /**
+             * Obtiene le numero de filas.
+             */
+            registros.beforeFirst();
+            /**
+             * Se posiciona al inicio.
+             */
+            datos = new String[filas][columnas];
+            int j = 0;
+            while (registros.next()/*next para pasar al siguiente. */) {
+                for (int i = 0; i < columnas; i++) {
+                    datos[j][i] = registros.getString(i + 1);
+                }
+                j++;
+            }
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        this.desconectar();
+        return datos;
+    }
+
+    /**
+     * Ejecuta consultas que insertan en tabla con id autoincremental
+     *
+     * @param SQL cadena de texto que contiene la consulta hacia la base de
+     * datos
+     * @return int resultado contiene el id que genero automaticamente la base
+     * de datos
+     */
+    public int insertar_AI(String SQL) {
+        int resultado = 0;
+        /**
+         * *******************
+         */
+        this.conectar();
+        ResultSet pkAI = null; //Primary Key AUTO INCREMENT
+        try {
+            Statement st = c1.createStatement();
+            st.executeUpdate(SQL, Statement.RETURN_GENERATED_KEYS);
+            pkAI = st.getGeneratedKeys();
+
+            if (pkAI.next()) {
+                resultado = pkAI.getInt(1); //UNO PORQUE ES LA PRIMERA COLUMNA
+                //LOS RESULTSET EMPIEZAN DESDE 1, LOS ARRAY DESDE 0 
+            }
+            c1.commit();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+
+        this.desconectar();
+        return resultado;
+    }
+
+   
+     /**
+     * Metodo para encriptar una cadena de texto usando el metodo SHA1
+     *
+     * @param SQL cadena de texto que contiene la consulta hacia la base de
+     * datos
+     * @return String hash que contiene la cadena de texto encriptada.
+     */
+    private MessageDigest md;
+    private byte[] buffer, digest;
+    private String hash = "";
+
+    protected String getHash(String message) {
+        try {
+            hash = "";
+            buffer = message.getBytes();
+            md = MessageDigest.getInstance("SHA1");
+            md.update(buffer);
+            digest = md.digest();
+
+            for (byte aux : digest) {
+                int b = aux & 0xff;
+                if (Integer.toHexString(b).length() == 1) {
+                    hash += "0";
+                }
+                hash += Integer.toHexString(b);
+            }
+
+        } catch (Exception e) {
+            e.getMessage();
+        }
+        return hash;
+    }
+}
