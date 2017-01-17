@@ -27,9 +27,9 @@ public class Conector {
     String coma = ",";
 
     private final String IP = "192.168.1.179";
-    private final String USUARIO = "pygcontabilidad";
-    private final String PASSWORD = "pygcontabilidad456";
-    private final String BASEDATOS = "contabilidad";
+    private final String USUARIO = "";
+    private final String PASSWORD = "";
+    private final String BASEDATOS = "";
 
     protected Connection conectar() {
         try {
