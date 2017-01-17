@@ -1,0 +1,124 @@
+<?php
+
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+/**
+ * Description of Prueba
+ *
+ * @author dajua
+ */
+class Conector {
+
+    //Connection c1 = null;
+    private $comilla = "'";
+    private $coma = ",";
+    private $IP = "localhost";
+    private $usuario = "root";
+    private $password = "";
+    private $BaseDatos = "la_torre";
+    private $dbh;
+
+    function getComilla() {
+        return $this->comilla;
+    }
+
+    function getComa() {
+        return $this->coma;
+    }
+
+    function setComilla($comilla) {
+        $this->comilla = $comilla;
+    }
+
+    function setComa($coma) {
+        $this->coma = $coma;
+    }
+
+    protected function conectar() {
+
+        try {
+            $this->dbh = new PDO('mysql:host=' . $this->IP . ';dbname=' . $this->BaseDatos, $this->usuario, $this->password);
+            echo "Exito <br>";
+        } catch (Exception $ex) {
+            echo $ex->getMessage();
+        }
+
+//            $con->query("SET NAMES '".$this->charset."'");
+//            $con=new mysqli($this->host, $this->user, $this->pass, $this->database);
+    }
+
+    protected function desconectar() {
+        try {
+            $this->dbh = null;
+        } catch (Exception $ex) {
+            echo $ex->getMessage();
+        }
+    }
+
+    public function consulta_vacia($SQL) {
+        $this->conectar();
+        try {
+            //PDOStatement::execute($this->dbh->prepare($SQL)); 
+            $st = $this->dbh->prepare($SQL);
+            $st->execute();
+            echo "Inserccion correcta";
+        } catch (Exception $ex) {
+            echo $ex->getMessage();
+        }
+        $this->desconectar();
+    }
+
+    public function consulta_registros($SQL) {
+
+//        $datos[0][0] = "Sin resultados";
+
+        $this->conectar();
+        try {
+            $st = $this->dbh->prepare($SQL);
+            $st->execute();
+            if ($st == true) {
+                if ($st->rowCount() > 1) {
+                    while ($row = $st->fetchAll(PDO::FETCH_NUM)) {
+                        $resultSet = $row;
+                    }
+                } elseif ($row = $st->rowCount() == 1) {
+                    if ($row = $st->fetchAll(PDO::FETCH_NUM)) {
+                        $resultSet = $row;
+                    }
+                } else {
+                    $resultSet = true;
+                }
+            } else {
+                $resultSet = false;
+            }
+            return $resultSet;
+        } catch (Exception $ex) {
+            echo $ex->getMessage();
+        }
+
+
+        $this->desconectar();
+    }
+
+    protected function insertar_AI($SQL) {
+        $this->conectar();
+        try {
+            $st = $this->dbh->prepare($SQL);
+            $st->execute();
+            $ID = $this->dbh->lastInsertId();
+
+            echo " - Inserccion correcta - <br>";
+        } catch (Exception $ex) {
+            echo $ex->getMessage();
+        }
+        $this->desconectar();
+        return $ID;
+    }
+
+}
+
+?>
