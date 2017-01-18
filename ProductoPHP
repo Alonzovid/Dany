@@ -1,0 +1,59 @@
+<?php
+require_once '../modelo/Producto.php';
+$producto = new Producto();
+
+$conteo = $producto->productos_contar();
+?>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title></title>
+    </head>
+    <body>
+        <?php
+        //primero obtenemos el parametro que nos dice en que pagina estamos
+        $page = 1; //inicializamos la variable $page a 1 por default
+        if (array_key_exists('pg', $_GET)) {
+            $page = $_GET['pg']; //si el valor pg existe en nuestra url, significa que estamos en una pagina en especifico.
+        }
+
+        $numeroMaximoXPagina = intval($conteo[0][0] / 20);
+        $datosProducto = $producto->productos_x_datos($page);
+        ?>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>ID Producto</th>
+                    <th>ID Categoria</th>
+                    <th>Nombre del producto</th>
+                    <th>Precio del producto</th>
+                    <th>Precio venta del Producto</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                foreach ($datosProducto as $d) {
+                    ?>
+                    <tr>   
+                        <td><?= $d[0] ?></td>
+                        <td><?= $d[1] ?></td>
+                        <td><?= $d[2] ?></td>
+                        <td><?= $d[3] ?></td>
+                        <td><?= $d[4] ?></td>
+
+                    </tr>
+                    <?php
+                }
+                ?>
+            </tbody>
+        </table>
+
+        <?php
+        //ahora viene la parte importante, que es el paginado
+        //recordemos que $max_num_paginas fue previamente calculado.
+        for ($i = 0; $i < $numeroMaximoXPagina; $i++) {
+            echo '<a href="ProductosRegistros.php?pg=' . ($i + 1) . '">' . ($i + 1) . '</a> | ';
+        }
+        ?>
+    </body>
+</html>
