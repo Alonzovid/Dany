@@ -1,0 +1,159 @@
+
+
+
+
+
+
+
+$(function () {
+    var botonNuevo = $('#enviar-datos').val();
+    botonNuevo = parseInt(botonNuevo);
+    if(botonNuevo > 0){
+        var username = $('#username').val();
+        var password = $('#password').val();
+        
+        var parametros = {
+                "username" : username,
+                "password" : password,
+                "enviar" : botonNuevo
+        };
+//        $.ajax({
+//                data:  parametros,
+//                url:   'login',
+//                type:  'post',
+//                success:  function (resultado) {
+//                        alert(resultado);
+//                }
+//        });
+        
+        $.post("login", parametros, function(resultado, estado, jqHXR){
+           window.location = "productos.jsp";
+        });
+        return false;
+    }
+    
+    /*===============================
+     * ==========REGISTRO*/
+    $("#text-deposito").hide();
+    $("#text-tarjeta").hide();
+    $("#text-dpi").hide();
+    $("#text-nit").hide();
+    $("#txt-telefono-casa").hide();
+    $("#txt-telefono-celular").hide();
+
+    $("#deposito-bancario").click(function (event) {
+        $('#text-deposito').show();
+        $("#text-tarjeta").hide();
+    });
+
+    $("#tarjeta-credito").click(function (event) {
+        $("#text-tarjeta").show();
+        $("#text-deposito").hide();
+    });
+
+    $("#radio-nit").click(function (event) {
+        $("#text-dpi").hide();
+        $("#text-nit").show();
+    });
+
+    $("#radio-dpi").click(function (event) {
+        $("#text-nit").hide();
+        $("#text-dpi").show();
+    });
+
+    $("#radio-casa").click(function (event) {
+        $("#txt-telefono-celular").hide();
+        $("#txt-telefono-casa").show();
+    });
+    $("#radio-celular").click(function (event) {
+        $("#txt-telefono-casa").hide();
+        $("#txt-telefono-celular").show();
+
+    });
+
+    $("#frm-registro").submit(function () {
+//        var data = $('#frm-registro').serialize();
+
+//        alert('Datos serializados: '+data);
+//
+//        $.ajax({
+//            type: "POST",
+//            url: "registrar",
+//            data: data,
+//            success: function(data) {
+//                console.log(data);
+//                alert(data);
+//            }
+//        });
+        
+        var data = $('#frm-registro').serialize();
+        alert(data);
+        $.post("registrar", data, function(resultado, estado, jqHXR){
+           alert(resultado); 
+        });
+        
+        
+        return false;
+    });
+
+
+
+    /*========================
+     * ==========DATEPICKER*/
+    $("#datepicker").datepicker({
+        changeMonth: true,
+        changeYear: true,
+        dateFormat: 'dd-mm-yy'
+    });
+    $.datepicker.regional['es'] = {
+        closeText: 'Cerrar',
+        prevText: '<Ant',
+        nextText: 'Sig>',
+        currentText: 'Hoy',
+        monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
+        monthNamesShort: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+        dayNames: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],
+        dayNamesShort: ['Dom', 'Lun', 'Mar', 'Mié', 'Juv', 'Vie', 'Sáb'],
+        dayNamesMin: ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá'],
+        weekHeader: 'Sm',
+        dateFormat: 'dd/mm/yy',
+        firstDay: 1,
+        isRTL: false,
+        showMonthAfterYear: false,
+        yearSuffix: ''
+    };
+    $.datepicker.setDefaults($.datepicker.regional['es']);
+    $(function () {
+        $("#fecha").datepicker();
+    });
+    /*=====================
+     * ======END DATEPICKER*/
+
+    /*====================================
+     * ==========CARRITO*/
+    $('tr #deleteitem').click(function (e) {
+        e.preventDefault();
+        var elemento = $(this);
+        var idproducto = elemento.parent().find('#idarticulo').text();
+        $.ajax({
+            url: 'eliminar_producto',
+            type: 'post',
+            data: {idProducto: idproducto},
+            success: function (resultado) {
+                elemento.parent().parent().remove();
+                //cart-container
+                var elementosTabla = $('#shop-table tr');
+                if (elementosTabla.length <= 1) {
+                    $('#cart-container').append("<h4>No hay articulos en el carro de compras</h4>");
+                    window.location = "cart_cancel";
+                }
+                $('#txt-subtotal').text(resultado);
+                $('#txt-total').text(resultado);
+            }
+        });
+    });
+    /*=====================================
+     * ============FIN CARRITO*/
+});
+
+
