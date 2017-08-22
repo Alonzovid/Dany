@@ -1,0 +1,102 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Data;
+using System.Data.SqlClient;
+using System.Configuration;
+
+namespace WindowsFormsApplication1.Modelo
+{
+
+    class Conector
+    {
+        private static string connection = "server=172.25.5.117; user id=sa; password=sesan2017; database=CRUD;";
+        private SqlConnection cnn = null;
+        public string comilla = "'";
+
+        private void conectar()
+        {
+            try
+            {
+                cnn = new SqlConnection(connection);
+                cnn.Open();
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+        }
+
+        public void desconectar()
+        {
+            try
+            {
+                cnn.Close();
+                cnn.Dispose();
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+        protected bool consulta_vacia(string SQL)
+        {
+            bool flag = false;
+            this.conectar();
+            try
+            {
+                SqlCommand cmd = new SqlCommand(SQL, cnn);
+                cmd.CommandTimeout = 0;
+                cmd.ExecuteNonQuery();
+                flag = true;
+            }
+            catch (Exception ex)
+            {
+                flag = false;
+            }
+            this.desconectar();
+            return flag;
+        }
+
+        private DataSet consulta_dataset(string SQL)
+        {
+            this.conectar();
+            DataSet ds = null;
+            try
+            {
+                SqlCommand cmd = new SqlCommand(SQL, cnn);
+                cmd.CommandTimeout = 0;
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                ds = new DataSet();
+                da.Fill(ds);
+            }
+            catch (Exception ex)
+            {
+                ds = null;
+            }
+            this.desconectar();
+            return ds;
+        }
+
+        protected DataTable consulta_datatable(string SQL)
+        {
+            this.conectar();
+            DataTable dt = null;
+            try
+            {
+                dt = consulta_dataset(SQL).Tables[0];
+            }catch(Exception ex)
+            {
+                dt = null;
+            }
+            this.desconectar();
+            return dt;
+        }
+
+
+    }
+}
